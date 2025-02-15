@@ -1,7 +1,8 @@
 import socket
-import cv2
 import pickle
 import struct
+import numpy as np
+import cv2
 
 # Ngrok TCP Address
 HOST = "0.tcp.in.ngrok.io"  # Replace with your Ngrok-assigned host
@@ -14,17 +15,19 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
     sock.connect((HOST, PORT))
     print("Connected! Streaming live video...")
-
-    cap = cv2.VideoCapture(0)  # Open the webcam
+    
+    cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    cap.set(cv2.CAP_PROP_FPS, 30)
     
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
-            print(" Failed to capture frame.")
             break
-
-        # Serialize frame
-        data = pickle.dumps(frame)
+        
+        _, compressed_frame = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])  # Compress frame
+        data = pickle.dumps(compressed_frame)
         size = struct.pack("Q", len(data))  # Pack size as unsigned long long (8 bytes)
         
         try:
@@ -36,10 +39,9 @@ try:
 except (ConnectionRefusedError, socket.error) as e:
     print(f"Connection failed: {e}")
 except KeyboardInterrupt:
-    print("\n Stopping video stream...")
+    print("Stopping video stream...")
 finally:
-    print(" Closing connection...")
-    if 'cap' in locals() and cap.isOpened():
-        cap.release()
+    print("Closing connection...")
+    cap.release()
     sock.close()
-    print(" Connection closed.")
+    print("Connection closed.")
