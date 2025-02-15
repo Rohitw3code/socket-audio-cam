@@ -26,8 +26,8 @@ try:
         if not ret:
             break
         
-        _, compressed_frame = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])  # Compress frame
-        data = pickle.dumps(compressed_frame)
+        _, compressed_frame = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 30])  # Further compression
+        data = pickle.dumps(compressed_frame, protocol=pickle.HIGHEST_PROTOCOL)  # Optimize serialization
         size = struct.pack("Q", len(data))  # Pack size as unsigned long long (8 bytes)
         
         try:
