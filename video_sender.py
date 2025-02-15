@@ -5,7 +5,7 @@ import struct
 
 # Create socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host_ip = 'RECEIVER_IP'  # Replace with receiver's IP address
+host_ip = ''  # Replace with receiver's IP address
 port = 9999
 
 client_socket.connect((host_ip, port))

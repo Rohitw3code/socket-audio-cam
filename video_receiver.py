@@ -1,45 +1,45 @@
 import cv2
 import socket
-import pickle
 import struct
+import pickle
 
-# Create socket
+HOST = "0.0.0.0"  # Listen on all interfaces
+PORT = 4040  # Must match the Ngrok local port
+
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host_ip = '0.0.0.0'  # Listen on all available interfaces
-port = 9999
-
-server_socket.bind((host_ip, port))
+server_socket.bind((HOST, PORT))
 server_socket.listen(5)
-print("Waiting for connection...")
+print(f"Listening on {HOST}:{PORT}...")
 
 conn, addr = server_socket.accept()
-print(f"Connected by {addr}")
+print(f"Connection from {addr}")
 
 data = b""
-payload_size = struct.calcsize("Q")  # Size of packed message size
+payload_size = struct.calcsize("Q")
 
 while True:
     while len(data) < payload_size:
-        packet = conn.recv(4 * 1024)  # Receive in chunks
+        packet = conn.recv(4096)
         if not packet:
             break
         data += packet
 
     packed_msg_size = data[:payload_size]
     data = data[payload_size:]
-    msg_size = struct.unpack("Q", packed_msg_size)[0]  # Unpack message size
+    msg_size = struct.unpack("Q", packed_msg_size)[0]
 
     while len(data) < msg_size:
-        data += conn.recv(4 * 1024)
+        data += conn.recv(4096)
 
     frame_data = data[:msg_size]
     data = data[msg_size:]
 
-    frame = pickle.loads(frame_data)  # Deserialize frame
-    cv2.imshow("Receiving...", frame)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    frame = pickle.loads(frame_data)
+    cv2.imshow("Live Webcam Stream", frame)
+    
+    if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
 conn.close()
+server_socket.close()
 cv2.destroyAllWindows()
