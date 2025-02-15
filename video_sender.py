@@ -1,36 +1,45 @@
-import cv2
 import socket
+import cv2
 import pickle
 import struct
 
-# Create socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host_ip = ''  # Replace with receiver's IP address
-port = 9999
+# Ngrok TCP Address
+HOST = "0.tcp.in.ngrok.io"  # Replace with your Ngrok-assigned host
+PORT = 17859  # Replace with your Ngrok-assigned external port
 
-client_socket.connect((host_ip, port))
-print("Connected to receiver.")
+print(f"Connecting to {HOST}:{PORT}...")
 
-cap = cv2.VideoCapture(0)
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+try:
+    sock.connect((HOST, PORT))
+    print("Connected! Streaming live video...")
+
+    cap = cv2.VideoCapture(0)  # Open the webcam
     
-    # Serialize frame
-    data = pickle.dumps(frame)
-    message_size = struct.pack("Q", len(data))  # Pack message size
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            print(" Failed to capture frame.")
+            break
 
-    # Send frame size first, then frame data
-    client_socket.sendall(message_size + data)
+        # Serialize frame
+        data = pickle.dumps(frame)
+        size = struct.pack("Q", len(data))  # Pack size as unsigned long long (8 bytes)
+        
+        try:
+            sock.sendall(size + data)
+        except socket.error as e:
+            print(f"Socket error: {e}")
+            break
 
-    # Show the sender's feed (optional)
-    cv2.imshow("Sending...", frame)
-    
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-client_socket.close()
-cv2.destroyAllWindows()
+except (ConnectionRefusedError, socket.error) as e:
+    print(f"Connection failed: {e}")
+except KeyboardInterrupt:
+    print("\n Stopping video stream...")
+finally:
+    print(" Closing connection...")
+    if 'cap' in locals() and cap.isOpened():
+        cap.release()
+    sock.close()
+    print(" Connection closed.")
