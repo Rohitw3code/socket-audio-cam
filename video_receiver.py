@@ -4,9 +4,11 @@ import struct
 import numpy as np
 import cv2
 
-# Ngrok TCP Address
-HOST = "0.0.0.0"  # Listen on all available interfaces
-PORT = 5000  # Use the same port as the sender
+
+# Use ngrok TCP address
+NGROK_HOST = "0.tcp.in.ngrok.io"  # Ngrok hostname
+NGROK_PORT = 11532  # Ngrok forwarded port
+
 
 print(f"Starting server on {HOST}:{PORT}...")
 
